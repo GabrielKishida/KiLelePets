@@ -64,6 +64,7 @@ def read_distance():
 
 # Example usage
 try:
+    print("Running KiLele main script")
     while True:
         # Example: Rotate servo to 90 degrees
         set_servo_angle(90)
