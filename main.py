@@ -3,6 +3,7 @@ import time
 
 # Set GPIO mode
 GPIO.setmode(GPIO.BCM)
+GPIO.cleanup()
 
 # Servo motor setup (PWM on GPIO 12)
 SERVO_PIN = 12
