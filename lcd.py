@@ -14,14 +14,15 @@ LCD_BACKLIGHT = 0x08  # On
 ENABLE = 0b00000100  # Enable bit
 
 # Timing constants
-E_PULSE = 0.0005
-E_DELAY = 0.0005
+E_PULSE = 0.001
+E_DELAY = 0.001
 
 # Initialize I2C
 bus = smbus2.SMBus(1)  # I2C bus (1 for Raspberry Pi Zero 2 W)
 
 def lcd_write_byte(bits, mode):
     """Send byte to data pins."""
+    print(f"Sending byte: {hex(bits)}, mode: {mode}")
     high_bits = mode | (bits & 0xF0) | LCD_BACKLIGHT
     low_bits = mode | ((bits << 4) & 0xF0) | LCD_BACKLIGHT
 
@@ -35,6 +36,7 @@ def lcd_write_byte(bits, mode):
 
 def lcd_toggle_enable(bits):
     """Toggle the enable pin."""
+    print(f"Toggling enable for bits: {hex(bits)}")
     time.sleep(E_DELAY)
     bus.write_byte(I2C_ADDR, bits | ENABLE)
     time.sleep(E_PULSE)
@@ -43,6 +45,7 @@ def lcd_toggle_enable(bits):
 
 def lcd_initialize():
     """Initialize the display."""
+    print("Initializing LCD...")
     lcd_write_byte(0x33, LCD_CMD)  # Initialize
     lcd_write_byte(0x32, LCD_CMD)  # Set to 4-bit mode
     lcd_write_byte(0x06, LCD_CMD)  # Cursor move direction
