@@ -2,6 +2,7 @@ import RPi.GPIO as GPIO
 import time
 from components import LcdController, ServoController, LedsController, ButtonsController, DistanceController
 
+GPIO.setmode(GPIO.BCM)
 lcd = LcdController()
 servo = ServoController()
 leds = LedsController()
