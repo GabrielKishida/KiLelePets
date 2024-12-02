@@ -11,17 +11,19 @@ distance = DistanceController()
 
 try:
     print("Running KiLele main script")
+    plus_count = 0
+    minus_count = 0
+    confirm_count = 0
     while True:
-        leds.turn_green_led(True)
-        leds.turn_yellow_led(True)
-        leds.turn_red_led(True)
-        time.sleep(1)
-        leds.turn_red_led(False)
-        time.sleep(1)
-        leds.turn_yellow_led(False)
-        time.sleep(1)
-        leds.turn_green_led(False)
-        time.sleep(1)
+        if buttons.is_confirm_pressed():
+            confirm_count += 1
+            print("confirm count: " + str(confirm_count))
+        if buttons.is_plus_pressed():
+            plus_count += 1
+            print("plus count: " + str(plus_count))
+        if buttons.is_minus_pressed():
+            minus_count += 1
+            print("minus count: " + str(minus_count))
 
 except KeyboardInterrupt:
     print("Program stopped by user")

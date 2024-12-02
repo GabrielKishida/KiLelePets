@@ -23,19 +23,18 @@ class ServoController:
         self.servo = GPIO.PWM(self.SERVO_PIN, 50)  # 50Hz PWM frequency for servo
         self.servo.start(0)
 
-    def set_servo_angle(self, angle):
-        duty = angle / 18 + 2
-        GPIO.output(self.SERVO_PIN, True)
-        self.servo.ChangeDutyCycle(duty)
-        time.sleep(0.5)
-        GPIO.output(self.SERVO_PIN, False)
-        self.servo.ChangeDutyCycle(0)
+    def left(self):
+        self.servo.ChangeDutyCycle(10)
+
+    def center(self):
+        self.servo.ChangeDutyCycle(5)
     
     def servo_stop(self):
         self.servo.stop()
 
 class LedsController:
-    LED_PINS = [4, 22, 27]
+    LED_PINS = [22, 27, 4]
+    DEBOUNCE_DELAY = 0.2 
 
     def __init__(self):
         for led in self.LED_PINS:
@@ -60,15 +59,28 @@ class ButtonsController:
         GPIO.setup(self.PLUS_PIN, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
         GPIO.setup(self.MINUS_PIN, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
         GPIO.setup(self.CONFIRM_PIN, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
+        self.last_pressed_time = {
+            self.PLUS_PIN: 0,
+            self.MINUS_PIN: 0,
+            self.CONFIRM_PIN: 0
+        }
 
+    def is_button_pressed(self, pin):
+        current_time = time.time()
+        if GPIO.input(pin) == GPIO.HIGH:
+            if current_time - self.last_pressed_time[pin] > self.DEBOUNCE_DELAY:
+                self.last_pressed_time[pin] = current_time
+                return True
+        return False
+    
     def is_plus_pressed(self):
-        return GPIO.input(self.PLUS_PIN) == GPIO.HIGH
+        return self.is_button_pressed(self.PLUS_PIN)
 
     def is_minus_pressed(self):
-        return GPIO.input(self.MINUS_PIN) == GPIO.HIGH
+        return self.is_button_pressed(self.MINUS_PIN)
 
     def is_confirm_pressed(self):
-        return GPIO.input(self.CONFIRM_PIN) == GPIO.HIGH
+        return self.is_button_pressed(self.CONFIRM_PIN)
     
 
 class DistanceController:
