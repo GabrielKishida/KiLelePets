@@ -29,6 +29,7 @@ class FSM:
     
     def update(self):
         result = self.current_state.do()
-        found = any(result in sublist for sublist in self.current_state.get_transitions().keys())
-        if found:
-            self.transition(result)
+        if result is not None:                
+            found = any(result in sublist for sublist in self.current_state.get_transitions().keys())
+            if found:
+                self.transition(result)

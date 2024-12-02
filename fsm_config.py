@@ -3,6 +3,7 @@ import time
 from components import LcdController, ServoController, LedsController, ButtonsController, DistanceController
 from fsm import FSM, State
 
+GPIO.setmode(GPIO.BCM)
 lcd = LcdController()
 servo = ServoController()
 leds = LedsController()
@@ -63,10 +64,10 @@ class ManualState(State):
         print("Manual State")
 
 menu_state = MenuState()
-interval_state = IntervalState()
-size_state = SizeState()
-auto_state = AutoState()
-manual_state = ManualState()
+interval_state = IntervalState("Interval")
+size_state = SizeState("Size")
+auto_state = AutoState("Auto")
+manual_state = ManualState("Manual")
 
 menu_state.add_transition("menu_to_interval", interval_state)
 menu_state.add_transition("menu_to_size", size_state)
@@ -79,7 +80,7 @@ try:
     print("Running KiLele main script")
     while True:
         fsm_config.update()
-        
+
 except KeyboardInterrupt:
     print("Program stopped by user")
 
