@@ -34,7 +34,6 @@ class ServoController:
 
 class LedsController:
     LED_PINS = [22, 27, 4]
-    DEBOUNCE_DELAY = 0.2 
 
     def __init__(self):
         for led in self.LED_PINS:
@@ -54,6 +53,7 @@ class ButtonsController:
     PLUS_PIN = 5
     MINUS_PIN = 6
     CONFIRM_PIN = 26
+    DEBOUNCE_DELAY = 0.2 
 
     def __init__(self):
         GPIO.setup(self.PLUS_PIN, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
