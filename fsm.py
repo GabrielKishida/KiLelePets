@@ -11,6 +11,12 @@ class State:
     
     def get_transitions(self):
         return self.transitions
+    
+    def enter(self):
+        return
+
+    def exit(self):
+        return
 
     def do(self):
         return
@@ -18,6 +24,7 @@ class State:
 class FSM:
     def __init__(self, initial_state):
         self.current_state = initial_state
+        self.current_state.enter()
 
     def transition(self, event):
         next_state = self.current_state.on_event(event)
@@ -25,7 +32,10 @@ class FSM:
             print(f"Transitioning from {self.current_state.name} to {next_state.name}")
         else:
             print(f"No transition for event '{event}' from state {self.current_state.name}")
+        self.current_state.exit()
+        next_state.enter()
         self.current_state = next_state
+
     
     def update(self):
         result = self.current_state.do()

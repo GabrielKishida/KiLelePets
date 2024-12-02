@@ -35,20 +35,25 @@ class MenuState(State):
     def __init__(self):
         super().__init__("Menu State")
         self.menu_index = 0
-        texts = self.menu_texts[self.menu_index]
+    
+    def enter(self):
+        texts = self.menu_texts[0]
         lcd.write(texts[0], texts[1])
 
     def do(self):
+        button_changed = False
         if self.menu_index > 3: self.menu_index = 0
         elif self.menu_index < 0: self.menu_index = 3
 
         if buttons.is_minus_pressed():
             self.menu_index -= 1
-            texts = self.menu_texts[self.menu_index]
-            lcd.write(texts[0], texts[1])
+            button_changed = True
         
         if buttons.is_plus_pressed():
             self.menu_index += 1
+            button_changed = True
+        
+        if button_changed:
             texts = self.menu_texts[self.menu_index]
             lcd.write(texts[0], texts[1])
         
@@ -65,6 +70,8 @@ class IntervalState(State):
 
     def __init__(self):
         super().__init__("Interval State")
+    
+    def enter(self):
         texts = self.interval_texts[selected_interval_index]
         lcd.write(texts[0], texts[1])
 
@@ -100,7 +107,7 @@ class ManualState(State):
         print("Manual State")
 
 menu_state = MenuState()
-interval_state = IntervalState("Interval")
+interval_state = IntervalState()
 size_state = SizeState("Size")
 auto_state = AutoState("Auto")
 manual_state = ManualState("Manual")
