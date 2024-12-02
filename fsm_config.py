@@ -69,16 +69,20 @@ class IntervalState(State):
         lcd.write(texts[0], texts[1])
 
     def do(self):
+        button_changed = False
+
+        if buttons.is_minus_pressed():
+            button_changed = True
+            selected_interval_index-= 1
+        
+        if buttons.is_plus_pressed():
+            button_changed = True
+            self.menu_index += 1
+        
         if selected_interval_index > 2: selected_interval_index = 0
         elif selected_interval_index < 0: selected_interval_index = 2
 
-        if buttons.is_minus_pressed():
-            selected_interval_index-= 1
-            texts = self.interval_texts[selected_interval_index]
-            lcd.write(texts[0], texts[1])
-        
-        if buttons.is_plus_pressed():
-            self.menu_index += 1
+        if button_changed:
             texts = self.interval_texts[selected_interval_index]
             lcd.write(texts[0], texts[1])
         
