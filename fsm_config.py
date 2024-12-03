@@ -16,6 +16,23 @@ selected_interval_index = 1
 sizes = ["small", "medium", "big"]
 selected_size_index = 1
 
+DISTANCE_THRESHOLD = 20
+OBJECT_TIMEOUT = 3
+
+MEAL_SIZE_TIME_DICT = {
+    0: 0.5,
+    1: 1,
+    2: 1.5,
+}
+
+MEAL_INTERVAL_TIME_DICT = {
+    0: 10,
+    1: 20,
+    2: 30,
+}
+
+
+
 class MenuState(State):
     
     menu_transitions = {
@@ -150,31 +167,104 @@ class SizeState(State):
         elif selected_size_index < 0: selected_size_index = 2
 
         if button_changed:
-            texts = self.interval_texts[selected_size_index]
+            texts = self.size_texts[selected_size_index]
             lcd.write(texts[0], texts[1])
         
         if buttons.is_confirm_pressed():
             return "size_to_menu"
 
 class AutoState(State):
+
+    class StandbyState(State):
+        def __init__(innerself):
+            super().__init__("Standby State")
+        
+        def enter(innerself):
+            lcd.write("STANDBY")
+        
+        def do(innerself):
+            global DISTANCE_THRESHOLD
+            cm = distance.read_distance()
+            print("Distance read: " + str(cm))
+            if cm < DISTANCE_THRESHOLD:
+                return "standby_to_object"
+            else:
+                time.sleep(1)
+            
+
+    class ObjectDetectedState(State):
+        def __init__(innerself):
+            super().__init__("ObjectDetected State")
+
+        def enter(innerself):
+            lcd.write("OBJECT DETECTED")
+
+        def do(innerself):
+            global OBJECT_TIMEOUT, DISTANCE_THRESHOLD
+            time.sleep(OBJECT_TIMEOUT)
+            cm = distance.read_distance()
+            print("Distance read: " + str(cm))
+            if cm < DISTANCE_THRESHOLD:
+                return "object_to_hold"
+            else:
+                return "object_to_standby"
+
+    class HoldDoorOpenState(State):
+        def __init__(innerself):
+            super().__init__("HoldDoorOpen State")
+        
+        def enter(innerself):
+            lcd.write("OPEN DOOR")
+        
+        def do(innerself):
+            global selected_size_index, MEAL_SIZE_TIME_DICT
+            time_opened = time.time()
+            servo.left()
+            while time.time() - time_opened < MEAL_SIZE_TIME_DICT[selected_size_index]:
+                print("holding door open for: " + str(time.time() - time_opened))
+
+            servo.center()
+            return "hold_to_food"
+
+    class FoodUnavailableState(State):
+        def __init__(innerself):
+            innerself.time_entered = 0
+            super().__init__("FoodUnavailableState State")
+
+        def enter(innerself):
+            lcd.write("NO FOOD")
+            innerself.time_entered = time.time()
+        
+        def do(innerself):
+            global selected_interval_index, MEAL_INTERVAL_TIME_DICT
+
+            current_time = time.time() - innerself.time_entered
+            print("tempo sem comida: " + str(current_time))
+            if current_time > MEAL_INTERVAL_TIME_DICT[selected_interval_index]:
+                return "food_to_standby"
+
     def __init__(self):
-        self.open = False
-        self.open_time = 0
-        super().__init__("Auto State")
+        self.standby_state = self.StandbyState()
+        self.object_detected_state = self.ObjectDetectedState()
+        self.hold_door_open_state = self.HoldDoorOpenState()
+        self.food_unavailable_state = self.FoodUnavailableState()
+
+        self.standby_state.add_transition("standby_to_object", self.object_detected_state)
+        self.object_detected_state.add_transition("object_to_standby", self.standby_state)
+        self.object_detected_state.add_transition("object_to_hold", self.hold_door_open_state)
+        self.hold_door_open_state.add_transition("hold_to_food", self.food_unavailable_state)
+        self.food_unavailable_state.add_transition("food_to_standby", self.standby_state)
+
+        self.fsm = FSM(self.standby_state)
+        servo.center()
 
     def do(self):
-        print("Auto state")
+        self.fsm.update()
 
 class ManualState(State):
-
-    meal_size_time_dict = {
-        0: 0.5,
-        1: 1,
-        2: 1.5,
-    }
-
     def __init__(self):
         super().__init__("Manual State")
+        self.open = False
 
     def enter(self):
         global selected_interval_index
@@ -195,7 +285,7 @@ class ManualState(State):
         if self.open:
             current_time = time.time() - self.open_time
             print("servo is open for: " + str(current_time))
-            if current_time > self.meal_size_time_dict[self.meal_size]:
+            if current_time > MEAL_SIZE_TIME_DICT[self.meal_size]:
                 print("closing servo")
                 leds.turn_red_led(False)
                 self.open = False
@@ -204,6 +294,7 @@ class ManualState(State):
     def do(self):
         if buttons.is_confirm_pressed():
             self.trigger_open_servo()
+        self.update_open_servo()
 
 menu_state = MenuState()
 interval_state = IntervalState()
