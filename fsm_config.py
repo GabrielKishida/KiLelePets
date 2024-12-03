@@ -99,9 +99,9 @@ class MenuState(State):
 
 class IntervalState(State):
     interval_texts = {
-        0: ["INTERVALO", "4 HORAS"],
-        1: ["INTERVALO", "8 HORAS"],
-        2: ["INTERVALO", "12 HORAS"],
+        0: ["INTERVALO", "10 SEGUNDOS"],
+        1: ["INTERVALO", "20 SEGUNDOS"],
+        2: ["INTERVALO", "30 SEGUNDOS"],
     }
 
     def __init__(self):
@@ -246,7 +246,7 @@ class AutoState(State):
             current_time_lcd = time.time() - innerself.time_lcd_shown()
             if current_time_lcd > 1:
                 lcd.write("NO FOOD", "TIME: " + f"{current_time:.1f}")
-                current_time_lcd = time.time()
+                innerself.time_lcd_shown = time.time()
             if current_time > MEAL_INTERVAL_TIME_DICT[selected_interval_index]:
                 return "food_to_standby"
 
@@ -281,6 +281,7 @@ class ManualState(State):
         global selected_interval_index
         global selected_size_index
 
+        lcd.write("MODO MANUAL", "- PARA VOLTAR")
         self.meal_interval = selected_interval_index
         self.meal_size = selected_size_index 
     
