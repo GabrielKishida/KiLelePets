@@ -24,10 +24,16 @@ class ServoController:
         self.servo.start(0)
 
     def left(self):
-        self.servo.ChangeDutyCycle(10)
+        for i in range(0,400):
+            self.servo.ChangeDutyCycle(5 + i/100)
+            time.sleep(0.001)
+        self.servo.ChangeDutyCycle(0)
 
     def center(self):
-        self.servo.ChangeDutyCycle(5)
+        for i in range(0,400):
+            self.servo.ChangeDutyCycle(9 - i/100)
+            time.sleep(0.001)
+        self.servo.ChangeDutyCycle(0)
     
     def servo_stop(self):
         self.servo.stop()

@@ -37,18 +37,24 @@ class MenuState(State):
         2: "G",
     }
 
-    menu_texts = {
-        0: ["CONFIGURAR", "INTERVALO: " + interval_size_dict[selected_interval_index]],
-        1: ["CONFIGURAR", "TAMANHO: " + size_size_dict[selected_size_index]],
-        2: ["SELECIONAR", "MODO AUTO"],
-        3: ["SELECIONAR", "MODO MANUAL"],
-    }
-
     def __init__(self):
         super().__init__("Menu State")
+        self.menu_texts = {
+            0: ["CONFIGURAR", "INTERVALO: " + self.interval_size_dict[selected_interval_index]],
+            1: ["CONFIGURAR", "TAMANHO: " + self.size_size_dict[selected_size_index]],
+            2: ["SELECIONAR", "MODO AUTO"],
+            3: ["SELECIONAR", "MODO MANUAL"],
+        }
         self.menu_index = 0
     
     def enter(self):
+        self.menu_index = 0
+        self.menu_texts = {
+            0: ["CONFIGURAR", "INTERVALO: " + self.interval_size_dict[selected_interval_index]],
+            1: ["CONFIGURAR", "TAMANHO: " + self.size_size_dict[selected_size_index]],
+            2: ["SELECIONAR", "MODO AUTO"],
+            3: ["SELECIONAR", "MODO MANUAL"],
+        }
         texts = self.menu_texts[0]
         lcd.write(texts[0], texts[1])
 
@@ -162,9 +168,9 @@ class AutoState(State):
 class ManualState(State):
 
     meal_size_time_dict = {
-        0: 1,
-        1: 2,
-        2: 3,
+        0: 0.5,
+        1: 1,
+        2: 1.5,
     }
 
     def __init__(self):
@@ -180,6 +186,7 @@ class ManualState(State):
     def trigger_open_servo(self):
         if not self.open:
             print("open servo")
+            leds.turn_red_led(True)
             self.open = True
             self.open_time = time.time()
             servo.left()
@@ -190,6 +197,7 @@ class ManualState(State):
             print("servo is open for: " + str(current_time))
             if current_time > self.meal_size_time_dict[self.meal_size]:
                 print("closing servo")
+                leds.turn_red_led(False)
                 self.open = False
                 servo.center()
 
@@ -199,9 +207,9 @@ class ManualState(State):
 
 menu_state = MenuState()
 interval_state = IntervalState()
-size_state = SizeState("Size")
-auto_state = AutoState("Auto")
-manual_state = ManualState("Manual")
+size_state = SizeState()
+auto_state = AutoState()
+manual_state = ManualState()
 
 menu_state.add_transition("menu_to_interval", interval_state)
 menu_state.add_transition("menu_to_size", size_state)
@@ -209,6 +217,7 @@ menu_state.add_transition("menu_to_auto", auto_state)
 menu_state.add_transition("menu_to_manual", manual_state)
 
 interval_state.add_transition("interval_to_menu", menu_state)
+size_state.add_transition("size_to_menu", menu_state)
 
 fsm_config = FSM(menu_state)
 
