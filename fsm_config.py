@@ -25,9 +25,21 @@ class MenuState(State):
         3: "menu_to_manual",
     }
 
+    interval_size_dict = {
+        0: "4H",
+        1: "8H",
+        2: "12H",
+    }
+
+    size_size_dict = {
+        0: "P",
+        1: "M",
+        2: "G",
+    }
+
     menu_texts = {
-        0: ["CONFIGURAR", "INTERVALO"],
-        1: ["CONFIGURAR", "TAMANHO"],
+        0: ["CONFIGURAR", "INTERVALO: " + interval_size_dict[selected_interval_index]],
+        1: ["CONFIGURAR", "TAMANHO: " + size_size_dict[selected_size_index]],
         2: ["SELECIONAR", "MODO AUTO"],
         3: ["SELECIONAR", "MODO MANUAL"],
     }
@@ -73,10 +85,14 @@ class IntervalState(State):
         super().__init__("Interval State")
     
     def enter(self):
+        global selected_interval_index
+
         texts = self.interval_texts[selected_interval_index]
         lcd.write(texts[0], texts[1])
 
     def do(self):
+        global selected_interval_index
+
         button_changed = False
 
         if buttons.is_minus_pressed():
@@ -98,14 +114,88 @@ class IntervalState(State):
             return "interval_to_menu"
 
 class SizeState(State):
+    size_texts = {
+        0: ["TAMANHO", "PEQUENO"],
+        1: ["TAMANHO", "MEDIO"],
+        2: ["TAMANHO", "GRANDE"],
+    }
+
+    def __init__(self):
+        super().__init__("Size State")
+    
+    def enter(self):
+        texts = self.size_texts[selected_size_index]
+        lcd.write(texts[0], texts[1])
+
     def do(self):
-        print("Size State")
+        global selected_size_index
+
+        button_changed = False
+
+        if buttons.is_minus_pressed():
+            button_changed = True
+            selected_size_index -= 1
+        
+        if buttons.is_plus_pressed():
+            button_changed = True
+            selected_size_index += 1
+        
+        if selected_size_index > 2: selected_size_index = 0
+        elif selected_size_index < 0: selected_size_index = 2
+
+        if button_changed:
+            texts = self.interval_texts[selected_interval_index]
+            lcd.write(texts[0], texts[1])
+        
+        if buttons.is_confirm_pressed():
+            return "size_to_menu"
+
 class AutoState(State):
+    def __init__(self):
+        self.open = False
+        self.open_time = 0
+        super().__init__("Auto State")
+
     def do(self):
-        print("Auto State")
+        print("Auto state")
+
 class ManualState(State):
+
+    meal_size_time_dict = {
+        0: 1,
+        1: 2,
+        2: 3,
+    }
+
+    def __init__(self):
+        super().__init__("Manual State")
+
+    def enter(self):
+        global selected_interval_index
+        global selected_size_index
+
+        self.meal_interval = selected_interval_index
+        self.meal_size = selected_size_index 
+    
+    def trigger_open_servo(self):
+        if not self.open:
+            print("open servo")
+            self.open = True
+            self.open_time = time.time()
+            servo.left()
+
+    def update_open_servo(self):
+        if self.open:
+            current_time = time.time() - self.open_time
+            print("servo is open for: " + str(current_time))
+            if current_time > self.meal_size_time_dict[self.meal_size]:
+                print("closing servo")
+                self.open = False
+                servo.center()
+
     def do(self):
-        print("Manual State")
+        if buttons.is_confirm_pressed():
+            self.trigger_open_servo()
 
 menu_state = MenuState()
 interval_state = IntervalState()
