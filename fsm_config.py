@@ -43,9 +43,9 @@ class MenuState(State):
     }
 
     interval_size_dict = {
-        0: "4H",
-        1: "8H",
-        2: "12H",
+        0: "10s",
+        1: "20s",
+        2: "30s",
     }
 
     size_size_dict = {
@@ -186,6 +186,7 @@ class AutoState(State):
             global DISTANCE_THRESHOLD
             cm = distance.read_distance()
             print("Distance read: " + str(cm))
+            lcd.write("STANDBY", "DISTANCE: " + f"{cm:.1f}")
             if cm < DISTANCE_THRESHOLD:
                 return "standby_to_object"
             else:
@@ -229,21 +230,28 @@ class AutoState(State):
     class FoodUnavailableState(State):
         def __init__(innerself):
             innerself.time_entered = 0
+            innerself.time_lcd_shown = 0
             super().__init__("FoodUnavailableState State")
 
         def enter(innerself):
             lcd.write("NO FOOD")
             innerself.time_entered = time.time()
+            innerself.time_lcd_shown = time.time()
         
         def do(innerself):
             global selected_interval_index, MEAL_INTERVAL_TIME_DICT
 
             current_time = time.time() - innerself.time_entered
             print("tempo sem comida: " + str(current_time))
+            current_time_lcd = time.time() - innerself.time_lcd_shown()
+            if current_time_lcd > 1:
+                lcd.write("NO FOOD", "TIME: " + f"{current_time:.1f}")
+                current_time_lcd = time.time()
             if current_time > MEAL_INTERVAL_TIME_DICT[selected_interval_index]:
                 return "food_to_standby"
 
     def __init__(self):
+        super().__init__("Auto State")
         self.standby_state = self.StandbyState()
         self.object_detected_state = self.ObjectDetectedState()
         self.hold_door_open_state = self.HoldDoorOpenState()
@@ -259,7 +267,10 @@ class AutoState(State):
         servo.center()
 
     def do(self):
-        self.fsm.update()
+        if buttons.is_minus_pressed():
+            return "auto_to_menu"
+        else: 
+            self.fsm.update()
 
 class ManualState(State):
     def __init__(self):
@@ -292,6 +303,8 @@ class ManualState(State):
                 servo.center()
 
     def do(self):
+        if buttons.is_minus_pressed():
+            return "manual_to_menu"
         if buttons.is_confirm_pressed():
             self.trigger_open_servo()
         self.update_open_servo()
@@ -309,6 +322,8 @@ menu_state.add_transition("menu_to_manual", manual_state)
 
 interval_state.add_transition("interval_to_menu", menu_state)
 size_state.add_transition("size_to_menu", menu_state)
+manual_state.add_transition("manual_to_menu", menu_state)
+auto_state.add_transition("auto_to_menu", menu_state)
 
 fsm_config = FSM(menu_state)
 
