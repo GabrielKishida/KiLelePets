@@ -150,7 +150,7 @@ class SizeState(State):
         elif selected_size_index < 0: selected_size_index = 2
 
         if button_changed:
-            texts = self.interval_texts[selected_interval_index]
+            texts = self.interval_texts[selected_size_index]
             lcd.write(texts[0], texts[1])
         
         if buttons.is_confirm_pressed():
